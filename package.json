@@ -1,0 +1,23 @@
+{
+  "name": "geo-tab-cypress",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "scripts": "cypress run",
+    "cyp": "npx cypress run --config-file=cypress.json --browser=chrome --headless"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cypress": "^8.5.0",
+    "mssql": "^9.1.2"
+  },
+  "devDependencies": {
+    "cypress-iframe": "^1.0.1",
+    "cypress-slow-down": "^1.2.1",
+    "cypress-xpath": "^2.0.1",
+    "typescript": "^5.1.6"
+  }
+}
