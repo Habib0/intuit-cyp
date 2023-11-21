@@ -11,8 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cypress": "^8.5.0",
-    "mssql": "^9.1.2"
+    "cypress": "^8.5.0"
   },
   "devDependencies": {
     "cypress-iframe": "^1.0.1",
