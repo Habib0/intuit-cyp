@@ -58,11 +58,21 @@ describe("intuit data by", () => {
                     cy.get('body').then($body => {
                         if ($body.find('td div[class="checkbox-sprite checked"]').length > 0) {
                             cy.log('already checked')
+                            cy.wait(4000)
+                            cy.get('.trowserHeaderRight > .hi-close').eq(0).click({force:true})
+                            cy.wait(4000)
+                            cy.get('body').then($body => {
+                               if ($body.find('[class="message "]').length > 0) {
+                                   cy.contains('button', 'Yes').click({ force: true });
+                               } else {
+                                   cy.log('popup not open');
+                               }
+                           });
                         }
                         else {
                             cy.log('checkbox not checked')
                             const state = '[class="table rightFieldsSection floatRight"] .dropDownImage';
-                            cy.get(state).eq(0).should('be.visible').click({force:true})
+                            cy.get(state,{timeout:120000}).eq(0).should('be.visible').click({force:true})
                             // Assuming you're on the page and have selected the relevant dropdown element
                             cy.get('.dijitMenuItem.highlight').each(($menuItem) => {
                                 const itemText = $menuItem.text();
@@ -101,6 +111,10 @@ describe("intuit data by", () => {
                                                   });
                                                   
                                             });
+                                            cy.wait(2000)
+                                        // Save Data
+                                        // cy.xpath('//div[@class="combo-button primary saveActionComboButton"]//button[@class="combo-button-toggle dijitDownArrowButton"]').click({force:true})
+                                        cy.contains('Save and close').eq(0).click({force:true})
                                     }
                                     else if (['CA', 'MD', 'LA'].includes(itemText)) {
                                         cy.log('Skipping checkbox click for Shipping items in CA, MD, LA states');
@@ -144,6 +158,10 @@ describe("intuit data by", () => {
                                                   
                                             }
                                         });
+                                        cy.wait(2000)
+                                        // Save Data
+                                        // cy.xpath('//div[@class="combo-button primary saveActionComboButton"]//button[@class="combo-button-toggle dijitDownArrowButton"]').click({force:true})
+                                        cy.contains('Save and close').eq(0).click({force:true})
                                     }
                                     else{
                                         cy.log('state is not in list so data skipping')
@@ -171,15 +189,7 @@ describe("intuit data by", () => {
             
             // cy.contains('button', 'Cancel').dblclick({force:true})
             // cy.get('[data-automation-id="button-cancel-universal"]')
-            cy.get('.trowserHeaderRight > .hi-close').eq(0).click({force:true})
-             cy.wait(4000)
-             cy.get('body').then($body => {
-                if ($body.find('[class="message "]').length > 0) {
-                    cy.contains('button', 'Yes').click({ force: true });
-                } else {
-                    cy.log('popup not open');
-                }
-            });
+         
             
         });
     

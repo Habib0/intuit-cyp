@@ -8,4 +8,4 @@
 8. hit command ->   npm install
 9. wait for installation complete
 10. for test runner hit command in vs code terminal --> npx cypress open
-11. test runner open -> click intuit.ts file
+11. test runner open -> click on intuit.ts file
