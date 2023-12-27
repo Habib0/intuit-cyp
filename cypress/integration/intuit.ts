@@ -165,6 +165,7 @@ describe("intuit data by", () => {
                                     }
                                     else{
                                         cy.log('state is not in list so data skipping')
+                                        cy.get('.trowserHeaderRight > .hi-close').eq(0).click({force:true})
                                     }
                             });
 
