@@ -8,6 +8,7 @@ describe("intuit data by", () => {
         cy.get('[data-testid="IdentifierFirstSubmitButton"]').click()
         cy.get('[name="Password"]',{timeout:20000}).should('be.visible').type('Amir@canam123.')
         cy.get('[data-testid="passwordVerificationContinueButton"]').click({force:true})
+        // cy.contains('CAN-AM WIRELESS LLC',{timeout:80000}).should('be.visible').click({force:true})
         cy.get('[data-id="shellMainNode"]',{timeout:50000}).should('be.visible')
         cy.get('[data-id="invoicing_and_sales"]').click({force:true})
         cy.get('[data-id="path-invoices-Tab"] > a').click({force:true})
@@ -20,31 +21,32 @@ describe("intuit data by", () => {
 
 
     function processInvoicesOnCurrentPage() {
-        cy.get('[data-morpheus-pluginid="sales-widgets-ui"] tbody', { timeout: 20000 })
-        .find('button[data-automation-id="edit-action-button"]')
-        .each(($referenceNumber, index) => {
+        // cy.get('[data-morpheus-pluginid="sales-widgets-ui"] tbody', { timeout: 20000 })
+        // .find('button[data-automation-id="edit-action-button"]')
+        // .each(($referenceNumber, index) => {
+
             // if (index >= 3) { // Adjust the index range as needed
             //     return; // This will stop the loop after the specified number of elements (e.g., 3)
             // }
-            // start one by one invoice
-            cy.wrap($referenceNumber).click({ force: true });
-            
-            
+           // // start one by one invoice
 
+            // cy.wrap($referenceNumber).click({ force: true });
+            
+            cy.pause()
             // cy.get('[class="sales-view-ui"]').should('be.visible')
             // cy.contains('button', 'Edit invoice').click()
             cy.get('[class="header stretch trowserHeader"]',{timeout:200000}).should('be.visible')
             // cy.wait(10000)
-            cy.wait(15000)
+            cy.wait(10000)
     
             // // check current month
     
             // //  Get the current date
-    
+        
              const currentDate = new Date();
              const currentMonth = currentDate.getMonth() + 1; // Adding 1 since getMonth() returns zero-based index
      
-             // Get the invoice date value from the hidden input
+            //  Get the invoice date value from the hidden input
              cy.get<HTMLInputElement>('[data-automation-id="input-creation-date-sales"] + input[type="hidden"]').then($hiddenInput => {
                  const invoiceDateValue = $hiddenInput.val() as string; // Type assertion
                  const invoiceDate = new Date(invoiceDateValue);
@@ -55,125 +57,147 @@ describe("intuit data by", () => {
                         //   cy.pause()
                 // check for checkbox checked or not
                 cy.wait(2000)
-                    cy.get('body').then($body => {
-                        if ($body.find('td div[class="checkbox-sprite checked"]').length > 0) {
-                            cy.log('already checked')
-                            cy.wait(4000)
-                            cy.get('.trowserHeaderRight > .hi-close').eq(0).click({force:true})
-                            cy.wait(4000)
-                            cy.get('body').then($body => {
-                               if ($body.find('[class="message "]').length > 0) {
-                                   cy.contains('button', 'Yes').click({ force: true });
-                               } else {
-                                   cy.log('popup not open');
-                               }
-                           });
-                        }
-                        else {
-                            cy.log('checkbox not checked')
-                            const state = '[class="table rightFieldsSection floatRight"] .dropDownImage';
-                            cy.get(state,{timeout:120000}).eq(0).should('be.visible').click({force:true})
-                            // Assuming you're on the page and have selected the relevant dropdown element
-                            cy.get('.dijitMenuItem.highlight').each(($menuItem) => {
-                                const itemText = $menuItem.text();
+                
+                // start state checking
+                const state = '[class="table rightFieldsSection floatRight"] .dropDownImage';
+                cy.get(state,{timeout:120000}).eq(0).should('be.visible').click({force:true})
+                // Assuming you're on the page and have selected the relevant dropdown element
+                let allCheckboxesChecked = true; 
+                cy.get('.dijitMenuItem.highlight').each(($menuItem) => {
+                    const itemText = $menuItem.text();
+
+                        if (['TX', 'FL', 'GA', 'NJ', 'NC', 'OH', 'IL'].includes(itemText)) {
+                        
+                            cy.log('if statement')
+                            cy.wait(2000)
+                            cy.get(state).eq(0).should('be.visible').click({force:true})
+                            cy.xpath('//div[@class="subsection12TitleText" and contains(text(), "Invoice no.")]')
+                            .click({force:true})
+                            // Find all rows in the table
+                            cy.get('.dgrid-row').each((row, index, list) => {
+                                const checkbox = row.find('td.field-taxable');
+                                const isChecked = checkbox.find('div.checkbox-sprite.checked').length > 0;
+                            
+                                const productService = row.find('.field-itemId .itemColumn').text().trim();
+                            
+                                if (isChecked) {
+                                    // Log a message and move to the next row
+                                    cy.log('Checkbox is already checked');
+                                    allCheckboxesChecked = false;
+                                  
+                                } else if (productService !== '') {
             
-                                    if (['TX', 'FL', 'GA', 'NJ', 'NC', 'OH', 'IL'].includes(itemText)) {
+                                        cy.log('checkbox not checked')
+                                        
+                                    // Log a message and check the checkbox
+                                    cy.log('Checking the checkbox for productService:', productService);
+                            
+                                    // Check the checkbox
+                                    cy.wrap(checkbox).dblclick({ force: true });
+                            
+                                    // Perform other actions as needed
+                                    cy.get('[aria-label="Sales Tax"]').eq(0).should('be.visible').click({ force: true });
+                                    cy.wait(2000);
+                            
+                                    // Log a message after checking the checkbox
+                                    cy.log('Checkbox checked for productService:', productService);
+                                } else if (productService === '') {
+                                    // Log a message and move to the next row
+                                    cy.log('Skipping checkbox because productService text is empty');
+                                    return;
+                                }
+                                   cy.get('body').then(($body) => {
+                                        const errorSelector = 'div.alert-content:contains("We can\'t validate this shipping address, so we\'ve based the sales tax calculation on your business address. For a more accurate calculation, update the address you are shipping to.")';
+                                      
+                                        if ($body.find(errorSelector).length > 0) {
+                                          cy.log('Error message found. Clicking on "See the math"');
+                                          cy.wait(15000);
+                                          cy.xpath('//button[@data-automation-id="recommendedTaxRatesModalDisplay"]//span[contains(text(), "See the math")]',{timeout:100000}).eq(0)
+                                          .should('be.visible').click({force:true})
+                                      
+                                          cy.get('[class="content"]').should('be.visible');
+                                          cy.get('[data-automation-id="editAgencyDrawerSave"]').click({ force: true });
+                                          cy.get('[class="close-sprite icon-close"]').eq(0).click({ force: true });
+                                        } else {
+                                          cy.log("Successfully checkbox checked");
+                                        }
+                                      });
+                                      
+                                });
+                                cy.wait(2000)
+                            // Save Data
+                            // cy.xpath('//div[@class="combo-button primary saveActionComboButton"]//button[@class="combo-button-toggle dijitDownArrowButton"]').click({force:true})
+                            if (allCheckboxesChecked) {
+                                cy.get('.trowserHeaderRight > .hi-close').eq(0).click({ force: true });
+                            }
+                            cy.wait(2000)
+                            cy.get('body').then($body => {
+                                if ($body.find('[class="dijitDialogTitleBar hideTitle"]').length > 0) {
+                                    cy.xpath('//div[@class="dijitDialogPaneContent"]//button[contains(text(), "No")]').click({force:true})
+                                    cy.wait(2000)
+                                    cy.contains('Save and close').eq(0).should('be.visible').click({ force: true });
+                                    cy.wait(2000)
+                                }
+                                else {
+                                    cy.log('already close data')
+                                    // cy.get('.trowserHeaderRight > .hi-close').eq(0).click({ force: true });
                                     
-                                        cy.log('if statement')
-                                        cy.wait(2000)
-                                        cy.get(state).eq(0).should('be.visible').click({force:true})
-                                        cy.xpath('//div[@class="subsection12TitleText" and contains(text(), "Invoice no.")]')
-                                        .click({force:true})
-                                        // Find all rows in the table
-                                            cy.get('.dgrid-row').each((row) => {
-                                                // Check if the row contains taxable cells
-                                                const checkbox = row.find('td.field-taxable');
-                                                cy.wrap(checkbox,{timeout:120000}).should('be.visible').dblclick({ force: true }) // Check the checkbox
-                                                cy.get('[aria-label="Sales Tax"]')
-                                                .eq(0).should('be.visible')
-                                                .click({force:true})
-                                                cy.wait(3000)
-                                                cy.get('body').then(($body) => {
-                                                    const errorSelector = 'div.alert-content:contains("We can\'t validate this shipping address, so we\'ve based the sales tax calculation on your business address. For a more accurate calculation, update the address you are shipping to.")';
-                                                  
-                                                    if ($body.find(errorSelector).length > 0) {
-                                                      cy.log('Error message found. Clicking on "See the math"');
-                                                      cy.wait(15000);
-                                                      cy.xpath('//button[@data-automation-id="recommendedTaxRatesModalDisplay"]//span[contains(text(), "See the math")]',{timeout:100000}).eq(0)
-                                                      .should('be.visible').click({force:true})
-                                                  
-                                                      cy.get('[class="content"]').should('be.visible');
-                                                      cy.get('[data-automation-id="editAgencyDrawerSave"]').click({ force: true });
-                                                      cy.get('[class="close-sprite icon-close"]').eq(0).click({ force: true });
-                                                    } else {
-                                                      cy.log("Successfully checkbox checked");
-                                                    }
-                                                  });
-                                                  
-                                            });
-                                            cy.wait(2000)
-                                        // Save Data
-                                        // cy.xpath('//div[@class="combo-button primary saveActionComboButton"]//button[@class="combo-button-toggle dijitDownArrowButton"]').click({force:true})
-                                        cy.contains('Save and close').eq(0).click({force:true})
-                                    }
-                                    else if (['CA', 'MD', 'LA'].includes(itemText)) {
-                                        cy.log('Skipping checkbox click for Shipping items in CA, MD, LA states');
-                                        // Skip checkbox click action for items with "Shipping" description
-                                        cy.wait(3000)
-                                        // cy.xpath('//div[@class="subsection12TitleText" and contains(text(), "Invoice no.")]')
-                                        // .click({force:true})
-                                        cy.get(state).eq(0).should('be.visible').click({force:true})
-                                        cy.get('.dgrid-row').each((row) => {
-                                            cy.wait(1000)
-                                            const productService = row.find('.field-itemId .itemColumn').text();
-                                            // const stated = row.find('.field-itemId .itemColumn').text();
-                                            
-                                            if (productService.includes('Shipping') ) {
-                                                cy.log('Skipping checkbox because SHIPPING item contain');
-                                            }
-                                            else {
-                                                
-                                                const checkbox = row.find('td.field-taxable');
-                                                cy.wrap(checkbox,{timeout:120000}).should('be.visible').dblclick({ force: true }); // Check the checkbox
-                                                cy.get('[aria-label="Sales Tax"]')
-                                                .eq(0).should('be.visible')
-                                                .click({force:true})
-                                                cy.wait(2000)
-                                                cy.get('body').then(($body) => {
-                                                    const errorSelector = 'div.alert-content:contains("We can\'t validate this shipping address, so we\'ve based the sales tax calculation on your business address. For a more accurate calculation, update the address you are shipping to.")';
-                                                  
-                                                    if ($body.find(errorSelector).length > 0) {
-                                                      cy.log('Error message found. Clicking on "See the math"');
-                                                      cy.wait(15000);
-                                                      cy.xpath('//button[@data-automation-id="recommendedTaxRatesModalDisplay"]//span[contains(text(), "See the math")]',{timeout:100000}).eq(0)
-                                                      .should('be.visible').click({force:true})
-                                                  
-                                                      cy.get('[class="content"]').should('be.visible');
-                                                      cy.get('[data-automation-id="editAgencyDrawerSave"]').click({ force: true });
-                                                      cy.get('[class="close-sprite icon-close"]').eq(0).click({ force: true });
-                                                    } else {
-                                                      cy.log("Successfully check box checked");
-                                                    }
-                                                  });
-                                                  
-                                            }
-                                        });
-                                        cy.wait(2000)
-                                        // Save Data
-                                        // cy.xpath('//div[@class="combo-button primary saveActionComboButton"]//button[@class="combo-button-toggle dijitDownArrowButton"]').click({force:true})
-                                        cy.contains('Save and close').eq(0).click({force:true})
-                                    }
-                                    else{
-                                        cy.log('state is not in list so data skipping')
-                                        cy.get('.trowserHeaderRight > .hi-close').eq(0).click({force:true})
-                                    }
-                            });
-
-
-
-
+                                }
+                            })
                         }
-                    })  
+                        else if (['CA', 'MD', 'LA'].includes(itemText)) {
+                            cy.log('Skipping checkbox click for Shipping items in CA, MD, LA states');
+                            // Skip checkbox click action for items with "Shipping" description
+                            cy.wait(3000)
+                            // cy.xpath('//div[@class="subsection12TitleText" and contains(text(), "Invoice no.")]')
+                            // .click({force:true})
+                            cy.get(state).eq(0).should('be.visible').click({force:true})
+                            cy.get('.dgrid-row').each((row) => {
+                                cy.wait(1000)
+                                const productService = row.find('.field-itemId .itemColumn').text();
+                                // const stated = row.find('.field-itemId .itemColumn').text();
+                                
+                                if (productService.includes('Shipping') ) {
+                                    cy.log('Skipping checkbox because SHIPPING item contain');
+                                }
+                                else {
+                                    
+                                    const checkbox = row.find('td.field-taxable');
+                                    cy.wrap(checkbox,{timeout:120000}).should('be.visible').dblclick({ force: true }); // Check the checkbox
+                                    cy.get('[aria-label="Sales Tax"]')
+                                    .eq(0).should('be.visible')
+                                    .click({force:true})
+                                    cy.wait(2000)
+                                    cy.get('body').then(($body) => {
+                                        const errorSelector = 'div.alert-content:contains("We can\'t validate this shipping address, so we\'ve based the sales tax calculation on your business address. For a more accurate calculation, update the address you are shipping to.")';
+                                      
+                                        if ($body.find(errorSelector).length > 0) {
+                                          cy.log('Error message found. Clicking on "See the math"');
+                                          cy.wait(15000);
+                                          cy.xpath('//button[@data-automation-id="recommendedTaxRatesModalDisplay"]//span[contains(text(), "See the math")]',{timeout:100000}).eq(0)
+                                          .should('be.visible').click({force:true})
+                                      
+                                          cy.get('[class="content"]').should('be.visible');
+                                          cy.get('[data-automation-id="editAgencyDrawerSave"]').click({ force: true });
+                                          cy.get('[class="close-sprite icon-close"]').eq(0).click({ force: true });
+                                        } else {
+                                          cy.log("Successfully check box checked");
+                                        }
+                                      });
+                                      
+                                }
+                            });
+                            cy.wait(2000)
+                            // Save Data
+                            // cy.xpath('//div[@class="combo-button primary saveActionComboButton"]//button[@class="combo-button-toggle dijitDownArrowButton"]').click({force:true})
+                            cy.contains('Save and close').eq(0).click({force:true})
+                            cy.wait(5000)
+                        }
+                        else{
+                            cy.log('state is not in list so data skipping')
+                            cy.get('.trowserHeaderRight > .hi-close').eq(0).click({ force: true });
+                        }
+                });
                 // end check for checkbox checked or not
                 }
                 // end check if month in current month
@@ -184,7 +208,7 @@ describe("intuit data by", () => {
              });
     
 
-
+        
             cy.wait(4000); // Adjust the wait time as needed
             // temporary data
             
@@ -192,7 +216,7 @@ describe("intuit data by", () => {
             // cy.get('[data-automation-id="button-cancel-universal"]')
          
             
-        });
+        // });
     
         // cy.go(-1); // Navigate back to the list of invoices
             
